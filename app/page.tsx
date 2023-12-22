@@ -21,12 +21,7 @@ export default async function Index() {
           </p>
           {user ? (
             <div className="flex flex-row gap-2">
-              <Link
-                href="/files"
-                className="bg-foreground py-3 px-6 rounded-lg font-mono text-sm text-background"
-              >
-                Upload
-              </Link>
+             
               <Link
                 href="/chat"
                 className="bg-foreground py-3 px-6 rounded-lg font-mono text-sm text-background"
