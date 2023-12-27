@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { experimental_useAssistant as useAssistant, Message } from 'ai/react';
-import uploadFileToOpenAI from '../actions/upload-file';
+import ReactMarkdown from 'react-markdown';
+
 const roleToColorMap: Record<Message['role'], { background: string; text: string }> = {
   system: { background: 'bg-red-500', text: 'text-white' },
   user: { background: 'bg-blue-500', text: 'text-white' },
@@ -64,19 +65,21 @@ export default function ChatPage() {
       <div className="max-w-3xl w-full bg-white shadow-lg rounded-lg overflow-hidden">
         <div className="p-6">
           <div className="text-2xl font-semibold text-gray-900 mb-4">
-            Chat Interface
+            Real Estate GPT(Lease Analyzer)
           </div>
           <div className="h-96 overflow-y-auto mb-4 p-4 bg-gray-50">
-            {messages.map((m: Message) => (
-              <div
-                key={m.id}
-                className={`whitespace-pre-wrap p-3 rounded-md mb-2 ${roleToColorMap[m.role].background} ${roleToColorMap[m.role].text}`}
-              >
-                <strong>{`${m.role}: `}</strong>
-                {m.content}
-              </div>
-            ))}
+        {messages.map((m: Message) => (
+          <div
+            key={m.id}
+            className={`whitespace-pre-wrap p-3 rounded-md mb-2 ${roleToColorMap[m.role].background} ${roleToColorMap[m.role].text}`}
+          >
+            <strong>{`${m.role}: `}</strong>
+            <ReactMarkdown>
+              {m.content}
+            </ReactMarkdown>
           </div>
+        ))}
+      </div>
           {status === 'in_progress' && (
             <div className="h-8 w-full bg-gray-200 rounded-lg animate-pulse mb-4" />
           )}
@@ -122,3 +125,6 @@ export default function ChatPage() {
     </div>
   )
 }
+
+
+
