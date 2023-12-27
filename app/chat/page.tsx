@@ -1,121 +1,124 @@
-
-
-
-
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cn } from '@/lib/utils';
+import { experimental_useAssistant as useAssistant, Message } from 'ai/react';
+import uploadFileToOpenAI from '../actions/upload-file';
+const roleToColorMap: Record<Message['role'], { background: string; text: string }> = {
+  system: { background: 'bg-red-500', text: 'text-white' },
+  user: { background: 'bg-blue-500', text: 'text-white' },
+  function: { background: 'bg-blue-100', text: 'text-blue-800' },
+  assistant: { background: 'bg-green-500', text: 'text-white' },
+  data: { background: 'bg-orange-400', text: 'text-white' },
+  tool: { background: 'bg-gray-200', text: 'text-gray-800' }
+};
 
 export default function ChatPage() {
-  const [assistantId, setAssistantId] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [input, setInput] = useState('');
-  const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([]);
   const supabase = createClientComponentClient();
+  const { status, messages, input, submitMessage, handleInputChange } = useAssistant({
+    api: '/api/chat',
+  });
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session && session.user) {
-        setUserId(session.user.id);
-        createAssistant(session.user.id);
       }
     });
   }, [supabase.auth]);
 
-  const createAssistant = async (userId: string) => {
-    const response = await fetch('/api/create-assistant', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userId: userId,
-        name: 'Real Estate Paralegal Assistant',
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+  const [image, setImage] = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(null);
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setImage(e.target.files[0]);
     }
-
-    const data = await response.json();
-    if (data.newAssistant && data.newAssistant.id) {
-      setAssistantId(data.newAssistant.id);
+  };
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('allo gov')
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value);
-  };
+  const handleFileUpload = async () => {
+    if (file) {
+      const formData = new FormData();
+      formData.append('file', file);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!assistantId || !userId || !input.trim()) return;
+      try {
+        const response = await fetch('/api/upload-file', {
+          method: 'POST',
+          body: formData,
+        });
 
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: userId,
-          assistantId: assistantId,
-          message: input,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        console.log('File uploaded with ID:', data.fileId);
+        // Perform any additional logic with the file upload response
+      } catch (error) {
+        console.error('Error uploading file:', error);
       }
-
-      const data = await response.json();
-      if (data.response) {
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          { role: 'user', content: input },
-          { role: 'assistant', content: data.response },
-        ]);
-        setInput(''); 
-      }
-    } catch (error) {
-      console.error('Failed to send message:', error);
     }
   };
-
   return (
-    <div className="max-w-6xl flex flex-col items-center w-full h-full">
-      <div className="flex flex-col w-full gap-6 grow my-2 sm:my-10 p-4 sm:p-8 sm:border rounded-sm overflow-y-auto">
-        <div className="border-slate-400 rounded-lg flex flex-col justify-start gap-4 pr-2 grow overflow-y-scroll">
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={cn(
-                'rounded-xl bg-gray-500 text-white px-4 py-2 max-w-lg',
-                message.role === 'user' ? 'self-end bg-blue-600' : 'self-start'
-              )}
+    <div className="flex flex-col items-center justify-center w-full h-screen bg-gray-100 p-6">
+      <div className="max-w-3xl w-full bg-white shadow-lg rounded-lg overflow-hidden">
+        <div className="p-6">
+          <div className="text-2xl font-semibold text-gray-900 mb-4">
+            Chat Interface
+          </div>
+          <div className="h-96 overflow-y-auto mb-4 p-4 bg-gray-50">
+            {messages.map((m: Message) => (
+              <div
+                key={m.id}
+                className={`whitespace-pre-wrap p-3 rounded-md mb-2 ${roleToColorMap[m.role].background} ${roleToColorMap[m.role].text}`}
+              >
+                <strong>{`${m.role}: `}</strong>
+                {m.content}
+              </div>
+            ))}
+          </div>
+          {status === 'in_progress' && (
+            <div className="h-8 w-full bg-gray-200 rounded-lg animate-pulse mb-4" />
+          )}
+          <form
+            className="flex flex-col gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              submitMessage();
+            }}
+          >
+            <input
+              type="file"
+              onChange={handleFileChange}
+              className="mb-2"
+            />
+            <button
+              type="button"
+              onClick={handleFileUpload}
+              className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300"
+              
             >
-              {message.content}
+              Upload Image
+            </button>
+            <div className="flex items-center gap-2">
+              <input
+                disabled={status !== 'awaiting_message'}
+                className="flex-grow p-2 border border-gray-300 rounded"
+                value={input}
+                placeholder="Type your message here..."
+                onChange={handleInputChange}
+              />
+              <button
+                type="submit"
+                disabled={status !== 'awaiting_message'}
+                className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300"
+              >
+                Send
+              </button>
             </div>
-          ))}
+          </form>
         </div>
-        <form className="flex items-center space-x-2 gap-2" onSubmit={handleSubmit}>
-          <Input
-            type="text"
-            autoFocus
-            placeholder="Send a message"
-            value={input}
-            onChange={handleInputChange}
-          />
-          <Button type="submit">
-            Send
-          </Button>
-        </form>
       </div>
     </div>
-  );
+  )
 }
