@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { experimental_useAssistant as useAssistant, Message } from 'ai/react';
 import ReactMarkdown from 'react-markdown';
-
+import { Toaster, toast } from 'sonner';
 const roleToColorMap: Record<Message['role'], { background: string; text: string }> = {
   system: { background: 'bg-red-500', text: 'text-white' },
   user: { background: 'bg-blue-500', text: 'text-white' },
@@ -35,7 +35,6 @@ export default function ChatPage() {
     }
   };
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('allo gov')
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
     }
@@ -53,15 +52,18 @@ export default function ChatPage() {
         });
 
         const data = await response.json();
+        toast.success('File uploaded to openai succesfully')
         console.log('File uploaded with ID:', data.fileId);
         // Perform any additional logic with the file upload response
       } catch (error) {
+      toast.error('There was an error uploading your file, please try again')
         console.error('Error uploading file:', error);
       }
     }
   };
   return (
     <div className="flex flex-col items-center justify-center w-full h-screen bg-gray-100 p-6">
+      <Toaster />
       <div className="max-w-3xl w-full bg-white shadow-lg rounded-lg overflow-hidden">
         <div className="p-6">
           <div className="text-2xl font-semibold text-gray-900 mb-4">
