@@ -68,8 +68,8 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col items-center justify-center w-full h-screen bg-gray-100 p-6">
       <Toaster />
-      <div className="max-w-3xl w-full bg-white shadow-lg rounded-lg overflow-hidden">
-        <div className="p-6">
+      <div className="w-full max-w-6xl bg-white shadow-lg rounded-lg overflow-hidden">
+        <div className="p-4">
           <div className="text-2xl font-semibold text-gray-900 mb-4">
             Real Estate GPT(Lease Analyzer)
           </div>
