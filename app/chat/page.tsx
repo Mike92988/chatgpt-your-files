@@ -12,7 +12,7 @@ const roleToColorMap: Record<
   system: { background: "bg-red-500", text: "text-white" },
   user: { background: "bg-blue-500", text: "text-white" },
   function: { background: "bg-blue-100", text: "text-blue-800" },
-  assistant: { background: "bg-green-500", text: "text-white" },
+  assistant: { background: "bg-indigo-500", text: "text-white" },
   data: { background: "bg-orange-400", text: "text-white" },
   tool: { background: "bg-gray-200", text: "text-gray-800" },
 };
