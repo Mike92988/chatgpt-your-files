@@ -23,8 +23,8 @@ export async function POST(req: Request) {
   const formData = await req.formData();
   const file = formData.get('file');
 
-  if (!(file instanceof File)) {
-    return new Response('No file uploaded.', { status: 400 });
+  if (!file || typeof file === 'string') {
+    return new Response('File not uploaded', {status: 404})
   }
 
   const user = (await supabase.auth.getUser()).data.user?.id;
